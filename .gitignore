@@ -122,3 +122,10 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+/.idea/gaussian-elimination.iml
+/.idea/misc.xml
+/.idea/inspectionProfiles/profiles_settings.xml
+/.idea/modules.xml
+/solver/solver.py
+/.idea/vcs.xml
+/.idea/.gitignore
