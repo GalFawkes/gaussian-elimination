@@ -1,6 +1,12 @@
 \documentclass{article}
-\usepackage{amsmath, amsthm, amssymb, minted}
+\usepackage{amsmath, amsthm, amssymb, minted, appendix}
 \renewcommand{\vec}[1]{\boldsymbol{#1}}
+\makeatletter
+\renewcommand*\env@matrix[1][*\c@MaxMatrixCols c]{%
+  \hskip -\arraycolsep
+  \let\@ifnextchar\new@ifnextchar
+  \array{#1}}
+\makeatother
 \title{Final Report, Gaussian Elimination by LU Decomposition With Permutation Matrix}
 \author{Zubair Mukhi\\
 MATH 201, \textsc{Case Western Reserve University}
@@ -9,53 +15,329 @@ MATH 201, \textsc{Case Western Reserve University}
 \begin{document}
 \maketitle
 \tableofcontents
+\pagebreak
+
 \section{Introduction}
-
-
-
-\subsection*{3.}
-A can be written as\\
+Gaussian Elimination is a process by which the series \begin{math}Ax=b\end{math}, where \emph{A} is a square (\begin{math}n\text{x}n\end{math}) matrix and \emph{b} is an \begin{math}n\text{x}1\end{math} matrix (a column vector). For some pairings of \emph{A} and \emph{b}, there exist a group of solutions, \emph{x}, for which the equation \begin{math}Ax=b\end{math} holds true. \emph{x} is an \begin{math}n\text{x}1\end{math} matrix.\\
+As an example, take an arbitrarily chosen \begin{math}3\text{x}3\end{math} matrix \emph{A}:\\
+\begin{math}A = \begin{bmatrix}a_{11}&a_{12}&a_{13}\\a_{21}&a_{22}&a_{23}\\a_{31}&a_{32}&a_{33}\end{bmatrix}\end{math}\\\\
+\emph{b} is then a \begin{math}3\text{x}1\end{math} column vector:\\\\
+\begin{math}b=\begin{bmatrix}b_{1}\\b_{2}\\b_{3}\end{bmatrix}\end{math}\\\\
+\emph{x} is then a \begin{math}3\text{x}1\end{math} column vector: \\\\
+\begin{math}b=\begin{bmatrix}x_{1}\\x_{2}\\x_{3}\end{bmatrix}\end{math}\\\\
+This can be rewritten via matrix multiplication:\\\\
+\begin{math}Ax=\begin{bmatrix}a_{11}x_1 + a_{12}x_2 + a_{13}x_3\\a_{21}x_1 + a_{22}x_2 + a_{23}x_3\\a_{31}x_1 + a_{32}x_2 + a_{33}x_3\\\end{bmatrix} = \begin{bmatrix}\\b\\\\\end{bmatrix}\end{math}\\\\
+This can further be separated into a series of equations:\\
 \begin{math}
-\begin{bmatrix}0&1\\1&0\\0&1\end{bmatrix}\begin{bmatrix}2&2&2&2\\1&2&1&2\end{bmatrix}\\
-\text{this can further be simplified to}\\
-\begin{bmatrix}1\\1\\1\end{bmatrix}\begin{bmatrix}2&2&2&2\end{bmatrix}
--\begin{bmatrix}1\\0\\1\end{bmatrix}\begin{bmatrix}1&0&1&1\end{bmatrix}\\
+a_{11}x_1 + a_{12}x_2 + a_{13}x_3=b_1\\
+a_{21}x_1 + a_{22}x_2 + a_{23}x_3=b_2\\
+a_{31}x_1 + a_{32}x_2 + a_{33}x_3=b_3
 \end{math}\\
-B can be written as\\
-\begin{math}
-\begin{bmatrix}0&1\\1&0\end{bmatrix}\begin{bmatrix}1&3&3\\1&2&2\end{bmatrix}\\
-\text{this can be simplfied to}\\
-\begin{bmatrix}1\\1\end{bmatrix}\begin{bmatrix}1&3&3\end{bmatrix}-\begin{bmatrix}1\\0\end{bmatrix}\begin{bmatrix}0&1&1\end{bmatrix}
-\end{math}
-\subsection*{4.}
-\begin{math}
-BB^T=\begin{bmatrix}9&13\\13&19\end{bmatrix}\text{, determinant is 2, trace is 28}\\
-B^TB=\begin{bmatrix}2&5&5\\5&13&13\\5&13&13\end{bmatrix}\text{, determinant is 0, trace is 28}\\
-\end{math}
-B is compressible since the sigma values are fairly small
-\subsection*{6.}
-\begin{math}
-(2-\lambda)(2-\lambda)-4=0\\
-4-4\lambda+\lambda^2+4=0\\
-\lambda=0,4\\
-\text{Singular values:}\\
-(20-\lambda)(5-\lambda)-100=0\\
-25\lambda+\lambda^2=0\\
-\lambda=0,25\\
-\sigma_1=5,\sigma_2=0\\
-\end{math}
-We know that the eigenvectors of A\textsuperscript{T}A are orthogonal because it is by definition a symmetric matrix. 
+We thus have a set of, when abstracted, n equations with n unknowns. This can be represented as both a series and the above matrix equations. Systems of equations are useful, but challenges arise when the value of n is very large, namely that solving large systems by hand is inefficient compared to leveraging computer power to resolve these systems for us. However, were a computer to solve systems of equations in the same way a human does, the computer would take a long time. Transforming the system into a set of matrices address these issues.\\
+Were we to solve the system of equations, we would do so by combining multiples of different equations together with the intent of isolating one or more variables, e.g. \begin{math}x_1 \text{ or } x_3\end{math}. Continuous combination continues until we reach one of three endpoints: the system has one solution, the system has infinitely many solutions, or there are no solutions. The same process is taken to solve the matrix  equation \emph{Ax}=\emph{b} above. Using this approach, we move each equation into a row, separating the unknowns into the \emph{x} column vector. To ensure visually that row operations are carried across both \emph{A} and \emph{b}, we can create the augmented matrix \begin{math}\begin{bmatrix}[c|c]A&b\end{bmatrix}\end{math}. Once we have the augmented matrix, we then manipulate its rows via elementary row operations, namely row swap, row addition, and row multiplication to create an upper triangular matrix, \emph{U} and its solution \emph{c}. The lower triangular matrix \emph{L} is also created by storing the row operations used to create \emph{U}. Thus, we have \emph{A}=\emph{LU}; \emph{Ux}=\emph{c} is used to solve \emph{x}.\\
+In some cases, however, rows should be permuted, or reordered, to prevent division by zero. Thus, the same swaps made to A are made to an identity matrix before LU decomposition occurs, creating the equation \emph{PA}=\emph{LU}. This is the approach utilized by the solving code.
 
+\section{Process Explanation}
+To solve \emph{Ax}=\emph{b}, the matrices should be reordered to avoid zeroes on the diagonals. This initial step will mitigate the need for reordering in the middle of the solution process, although it generates \emph{PA}=\emph{LU}.\\
+For reference, I will solve the following augmented (\begin{math}\begin{bmatrix}[c|c]A&b\end{bmatrix}\end{math}) matrices to illustrate the three outcomes of Gaussian elimination, one solution, infinitely many solutions, and no solution. I will do so following the algorithm used by the solver even if the numbers are unfavorable to compute by hand:\\
+\begin{math}
+\text{\bf{1:}}\begin{bmatrix}[c|c]A&b\end{bmatrix} = \begin{bmatrix}[cccc|c]1&-1&2&-1&-8\\2&-2&3&-3&-20\\1&1&1&0&-2\\1&-1&4&3&4\end{bmatrix}\\\\
+\text{\bf{2:}}\begin{bmatrix}[c|c]A&b\end{bmatrix} = \begin{bmatrix}[ccc|c]1&1&1&4\\2&2&1&6\\1&1&2&6\end{bmatrix}\\\\
+\text{\bf{3:}}\begin{bmatrix}[c|c]A&b\end{bmatrix} =\begin{bmatrix}[ccc|c]1&1&1&4\\2&2&1&4\\1&1&2&6\end{bmatrix}
+\end{math}
+
+\subsection{Equation 1}
+
+\subsubsection{Reordering}
+\begin{math}
+\begin{bmatrix}[c|c]A&b\end{bmatrix} = \begin{bmatrix}[cccc|c]1&-1&2&-1&-8\\2&-2&3&-3&-20\\1&1&1&0&-2\\1&-1&4&3&4\end{bmatrix}\\\\
+\text{We can reorder this and generate the permutation matrix }P\\
+P = \begin{bmatrix}0&1&0&0\\0&0&1&0\\0&0&0&1\\1&0&0&0\end{bmatrix}\\
+\text{This reordering leads to:}\\
+\begin{bmatrix}[c|c]A&b\end{bmatrix} = \begin{bmatrix}[cccc|c]2&-2&3&-3&-20\\1&1&1&0&-2\\1&-1&4&3&4\\1&-1&2&-1&-8\end{bmatrix}
+\end{math}
+
+\subsubsection{LU Decomposition}
+We can now apply LU Decomposition to this matrix, as it has been reordered to avoid zeroes in the determinant.
+\begin{math}
+L =  \begin{bmatrix}1&0&0&0\\0&1&0&0\\0&0&1&0\\0&0&0&1\end{bmatrix}\\
+r_2 = r_2-0.5r_1\\
+r_3 = r_3-0.5r_1\\
+r_4 = r_4-0.5r_1\\\\
+L = \begin{bmatrix}1&0&0&0\\0.5&1&0&0\\0.5&0&1&0\\0.5&0&0&1\end{bmatrix}\\
+\begin{bmatrix}[c|c]U&c\end{bmatrix} = \begin{bmatrix}[cccc|c]2&-2&3&-3&-20\\0&2&-0.5&1.5&-12\\0&0&2.5&4.5&14\\0&0&0.5&0.5&2\end{bmatrix}\\
+\text{There is no cancellation needed for pivot at (2,2), so the step is ignored.}\\
+r_4 = r_4-0.2r_3\\\\
+L = \begin{bmatrix}1&0&0&0\\0.5&1&0&0\\0.5&0&1&0\\0.5&0&0.2&1\end{bmatrix}\\
+\begin{bmatrix}[c|c]U&c\end{bmatrix} = \begin{bmatrix}[cccc|c]2&-2&3&-3&-20\\0&2&-0.5&1.5&8\\0&0&2.5&4.5&14\\0&0&0&-0.4&-0.8\end{bmatrix}\\
+\text{At this point, L and U are both triangular, so we can move to the next step, backsolving.}
+\end{math}
+
+\subsubsection{Backsolving}
+\begin{math}
+\begin{bmatrix}[c|c]U&c\end{bmatrix} = \begin{bmatrix}[cccc|c]2&-2&3&-3&-20\\0&2&-0.5&1.5&8\\0&0&2.5&4.5&14\\0&0&0&-0.4&-0.8\end{bmatrix}\\
+x = \begin{bmatrix}x_1\\x_2\\x_3\\x_4\end{bmatrix}\\
+\text{Taking the last row, }-0.4x_4 = -0.8\\
+x_4 = 2\\
+x = \begin{bmatrix}x_1\\x_2\\x_3\\2\end{bmatrix}\\
+\text{Now, we propagate the change through U.}\\
+\begin{bmatrix}[c|c]U&c\end{bmatrix} = \begin{bmatrix}[cccc|c]2&-2&3&-3(2)&-20\\0&2&-0.5&1.5(2)&8\\0&0&2.5&4.5(2)&14\\0&0&0&-0.4(2)&-0.8\end{bmatrix}\\
+\begin{bmatrix}[c|c]U&c\end{bmatrix} = \begin{bmatrix}[cccc|c]2&-2&3&0&-14\\0&2&-0.5&0&5\\0&0&2.5&0&5\\0&0&0&0&0\end{bmatrix}\\
+\text{Now, we repeat for row 3}\\
+2.5x_3 = 5\\
+x_3 = 2\\
+x = \begin{bmatrix}x_1\\x_2\\2\\2\end{bmatrix}\\
+\begin{bmatrix}[c|c]U&c\end{bmatrix} = \begin{bmatrix}[cccc|c]2&-2&3(2)&0&-14\\0&2&-0.5(2)&0&5\\0&0&2.5(2)&0&5\\0&0&0&0&0\end{bmatrix}\\
+\begin{bmatrix}[c|c]U&c\end{bmatrix} = \begin{bmatrix}[cccc|c]2&-2&0&0&-20\\0&2&0&0&6\\0&0&0&0&0\\0&0&0&0&0\end{bmatrix}\\
+\text{Now, we repeat for row 2}\\
+2x_2 = 6\\
+x_2 = 3\\
+x = \begin{bmatrix}x_1\\3\\2\\2\end{bmatrix}\\
+\begin{bmatrix}[c|c]U&c\end{bmatrix} = \begin{bmatrix}[cccc|c]2&-2(3)&0&0&-20\\0&2(3)&0&0&6\\0&0&0&0&0\\0&0&0&0&0\end{bmatrix}\\
+\begin{bmatrix}[c|c]U&c\end{bmatrix} = \begin{bmatrix}[cccc|c]2&0&0&0&-14\\0&0&0&0&0\\0&0&0&0&0\\0&0&0&0&0\end{bmatrix}\\
+\text{At this point, only }x_1\text{ remains to be solved. This is now trivial.}\\
+x = \begin{bmatrix}-7\\3\\2\\2\end{bmatrix}\\
+\end{math}
+
+\subsection{Equation 2}
+
+\subsubsection{Reordering}
+\begin{math}
+\begin{bmatrix}[c|c]A&b\end{bmatrix} = \begin{bmatrix}[ccc|c]1&1&1&4\\2&2&1&6\\1&1&2&6\end{bmatrix}\\\\
+\text{We can reorder this and generate the permutation matrix }P\\
+P = \begin{bmatrix}0&1&0\\1&0&0\\0&0&1\end{bmatrix}\\
+\text{This reordering leads to:}\\
+\begin{bmatrix}[c|c]A&b\end{bmatrix} = \begin{bmatrix}[ccc|c]2&2&1&6\\1&1&1&4\\1&1&2&6\end{bmatrix}\\\\
+\end{math}
+
+\subsubsection{LU Decomposition}
+We can now apply LU Decomposition to this matrix, as it has been reordered to avoid zeroes in the determinant.
+\begin{math}
+L =  \begin{bmatrix}1&0&0\\0&1&0\\0&0&1\end{bmatrix}\\
+r_2 = r_2-0.5r_1\\
+r_3 = r_3-0.5r_1\\
+L =  \begin{bmatrix}1&0&0\\0.5&1&0\\0.5&0&1\end{bmatrix}\\
+\text{This is the only cancellation step needed.}\\
+\begin{bmatrix}[c|c]U&c\end{bmatrix} = \begin{bmatrix}[ccc|c]2&2&1&6\\0&0&0.5&1\\0&0&1.5&3\end{bmatrix}\\\\
+\text{At this point, L and U are both triangular, so we can move to the next step, backsolving.}
+\end{math}
+
+\subsubsection{Backsolving}
+\begin{math}
+\begin{bmatrix}[c|c]U&c\end{bmatrix} = \begin{bmatrix}[ccc|c]2&2&1&6\\0&0&0.5&1\\0&0&1.5&3\end{bmatrix}\\\\
+x = \begin{bmatrix}x_1\\x_2\\x_3\end{bmatrix}\\
+\text{Taking the last row, }1.5x_3 = 3\\
+x_3 = 2\\
+x = \begin{bmatrix}x_1\\x_2\\2\end{bmatrix}\\
+\text{Now, we propagate the change through U.}\\
+\begin{bmatrix}[c|c]U&c\end{bmatrix} = \begin{bmatrix}[ccc|c]2&2&1&6\\0&0&0&0\\0&0&0&0\end{bmatrix}\\\\
+\text{Now, we repeat for row 2.}\\
+\text{However, }0x_2=0\text{, so }x_2\text{ is considered ``free,'' so there are infinitely many solutions.}  \\
+x = \begin{bmatrix}x_1\\x_2\\2\end{bmatrix}\\
+\text{For our purposes, we will assign }x_2\text{ the values 1 and -1.}\\
+x_+ = \begin{bmatrix}x_1\\1\\2\end{bmatrix}\\
+x_- = \begin{bmatrix}x_1\\-1\\2\end{bmatrix}\\
+\text{This propagates through the matrix, leaving }x_1\text{.}\\
+\text{This is a single variable, so I will skip the propagation.}\\
+x_+ = \begin{bmatrix}2\\1\\2\end{bmatrix}\\
+x_- = \begin{bmatrix}3\\-1\\2\end{bmatrix}\\
+\end{math}
+
+\subsection{Equation 3}
+
+\subsubsection{Reordering}
+\begin{math}
+\begin{bmatrix}[c|c]A&b\end{bmatrix} = \begin{bmatrix}[ccc|c]1&1&1&4\\2&2&1&6\\1&1&2&6\end{bmatrix}\\\\
+\text{We can reorder this and generate the permutation matrix }P\\
+P = \begin{bmatrix}0&1&0\\1&0&0\\0&0&1\end{bmatrix}\\
+\text{This reordering leads to:}\\
+\begin{bmatrix}[c|c]A&b\end{bmatrix} = \begin{bmatrix}[ccc|c]2&2&1&6\\1&1&1&4\\1&1&2&6\end{bmatrix}\\\\
+\end{math}
+
+\subsubsection{LU Decomposition}
+We can now apply LU Decomposition to this matrix, as it has been reordered to avoid zeroes in the determinant.
+\begin{math}
+L =  \begin{bmatrix}1&0&0\\0&1&0\\0&0&1\end{bmatrix}\\
+r_2 = r_2-0.5r_1\\
+r_3 = r_3-0.5r_1\\
+L =  \begin{bmatrix}1&0&0\\0.5&1&0\\0.5&0&1\end{bmatrix}\\
+\text{This is the only cancellation step needed.}\\
+\begin{bmatrix}[c|c]U&c\end{bmatrix} = \begin{bmatrix}[ccc|c]2&2&1&4\\0&0&0.5&2\\0&0&1.5&4\end{bmatrix}\\\\
+\text{At this point, L and U are both triangular, so we can move to the next step, backsolving.}
+\end{math}
+
+\subsubsection{Backsolving}
+\begin{math}
+\begin{bmatrix}[c|c]U&c\end{bmatrix} = \begin{bmatrix}[ccc|c]2&2&1&4\\0&0&0.5&2\\0&0&1.5&4\end{bmatrix}\\\\
+x = \begin{bmatrix}x_1\\x_2\\x_3\end{bmatrix}\\
+\text{Taking the last row, }1.5x_3 = 4\\
+x_3 = \frac{8}{3}\\
+x = \begin{bmatrix}x_1\\x_2\\\frac{8}{3}\end{bmatrix}\\
+\text{Now, we propagate the change through U.}\\
+\begin{bmatrix}[c|c]U&c\end{bmatrix} = \begin{bmatrix}[ccc|c]2&2&1&6\\0&0&0.5*\frac{8}{3}&2\\0&0&0&0\end{bmatrix}\\\\
+\end{math}
+However, observe \emph{r\textsubscript{2}}. For \emph{r\textsubscript{2}} to provide a solution, \begin{math}\frac{4}{3} = 2\end{math}. This is simply false. Thus, there are no solutions to the given \emph{Ax}=\emph{b}.
+
+\section{Implementation}
+To solve \emph{Ax}=\emph{b}, the solving code goes through several steps.\\
+It first prompts the user to enter the size of \emph{A}, taking one dimension and stipulating that \emph{A} be a square matrix. It then requests \emph{b}, validating that all sizes match the requirements for Gaussian elimination. It then prints these values\\
+Next, it permutes \emph{A} to make sure that the diagonals contain the largest values. It records the swaps in the permutation matrix \emph{P}, initialized as the \begin{math}n\text{x}n\end{math} identity matrix, and permutesb\emph{A} to match, returning updated \emph{P}, \emph{A}, and \emph{b}. See the function \begin{verbatim}reorder(a, b, p, ptr)\end{verbatim} at \ref{reorder} for the source code.\\
+Next, it executes LU decomposition in the function \begin{verbatim}generate_u(arr_a, arr_b, arr_l, n_rows)\end{verbatim} Refer to \ref{lu} for source code. This function returns L and U of the \emph{L} and \emph{U} resulting from the \emph{permutation}, given as \emph{PA}=\emph{LU}. Note that this code skips zero value pivots in order to avoid division by zero errors. It also returns \emph{c}, the result of ensuring that the elimination steps taken on \emph{A} to generate \emph{U} also occur on \emph{b}.\\
+Last, the solving code actually solves the equation \emph{Ux}=\emph{c} generated from the previous code (see \ref{solver} for code). It starts from the lower right, moving up and left along the diagonal. If the currently focused pivot value is zero, it compares the value in \emph{c} to the pivot and shifts into the \verb+infinite_sols+ flow to finish solving the series. If the value in \emph{c} corresponding to the zero pivot is not zero, the function terminates, as it has determined that there are no solutions. If the pivot is not zero, then it solves the corresponding \emph{x} by dividing the corresponding \emph{c} value by the pivot and storing it as the corresponding \emph{x}. It then propagates this value through the rest of the partially-solved \emph{U} and \emph{c} to ensure that the next processed row has only one unknown. The \verb+infinite_sols+ flow does the same thing in parallel on 2 arrays, one of which has the the free variable set to 1 and the other to -1.
+
+\section{Code Execution Samples}
+
+\subsection{Equation 1}
+\begin{verbatim}
+How many rows?
+>>> 4
+please enter row 1 of A
+>>> 1,-1,2,-1
+please enter row 2 of A
+>>> 2,-2,3,-3
+please enter row 3 of A
+>>> 1,1,1,0
+please enter row 4 of A
+>>> 1,-1,4,3
+please enter b
+>>> -8,-20,-2,4
+Ax=b
+[[ 1. -1.  2. -1.]
+ [ 2. -2.  3. -3.]
+ [ 1.  1.  1.  0.]
+ [ 1. -1.  4.  3.]]x=[ -8. -20.  -2.   4.]
+
+P:
+[[0. 1. 0. 0.]
+ [0. 0. 1. 0.]
+ [0. 0. 0. 1.]
+ [1. 0. 0. 0.]]
+
+L:
+[[1.  0.  0.  0. ]
+ [0.5 1.  0.  0. ]
+ [0.5 0.  1.  0. ]
+ [0.5 0.  0.2 1. ]]
+
+U:
+[[ 2.  -2.   3.  -3. ]
+ [ 0.   2.  -0.5  1.5]
+ [ 0.   0.   2.5  4.5]
+ [ 0.   0.   0.  -0.4]]
+
+c:
+[-20.    8.   14.   -0.8]
+
+Next, we solve Ux=c
+x is the following:
+-6.999999999999998
+2.9999999999999996
+1.9999999999999993
+2.0000000000000004
+\end{verbatim}
+Note that here, there are some rounding issues. This stems from the variable forms I used in the solver, since I use a determinant check to switch between single-solution and the no-solution/infinitely-many mode, as \verb+numpy+ doesn't take the determinant of \verb+longdouble+ format variables and so I used the \verb+double+ datatype instead.
+
+\subsection{Equation 2}
+\begin{verbatim}
+How many rows?
+>>> 3
+please enter row 1 of A
+>>> 1,1,1
+please enter row 2 of A
+>>> 2,2,1
+please enter row 3 of A
+>>> 1,1,2
+please enter b
+>>> 4,6,6
+Ax=b
+[[1. 1. 1.]
+ [2. 2. 1.]
+ [1. 1. 2.]]x=[4. 6. 6.]
+
+P:
+[[0. 1. 0.]
+ [1. 0. 0.]
+ [0. 0. 1.]]
+
+L:
+[[1.  0.  0. ]
+ [0.5 1.  0. ]
+ [0.5 0.  1. ]]
+
+U:
+[[2.  2.  1. ]
+ [0.  0.  0.5]
+ [0.  0.  1.5]]
+
+c:
+[6. 1. 3.]
+
+Next, we solve Ux=c
+
+infinitely many solutions
+[1. 1. 2.]
+[ 3. -1.  2.]
+\end{verbatim}
+
+\subsection{Equation 3}
+\begin{verbatim}
+How many rows?
+>>> 3
+please enter row 1 of A
+>>> 1,1,1
+please enter row 2 of A
+>>> 2,2,1
+please enter row 3 of A
+>>> 1,1,2
+please enter b
+>>> 4,4,6
+Ax=b
+[[1. 1. 1.]
+ [2. 2. 1.]
+ [1. 1. 2.]]x=[4. 4. 6.]
+
+P:
+[[0. 1. 0.]
+ [1. 0. 0.]
+ [0. 0. 1.]]
+
+L:
+[[1.  0.  0. ]
+ [0.5 1.  0. ]
+ [0.5 0.  1. ]]
+
+U:
+[[2.  2.  1. ]
+ [0.  0.  0.5]
+ [0.  0.  1.5]]
+
+c:
+[4. 2. 4.]
+
+Next, we solve Ux=c
+x is the following:
+No solution
+\end{verbatim}
+
+\section{Known Limitations}
+Currently, this code is not tested for multiple zeroes in the code. However, this could be resolved via recursive calls to the \verb+infinite_sols+ code. There is a possibility that this would explode the solution set, though. A less memory-intensive solution may be to replace any future zeroes found on pivots with a zero in the corresponding x.
+
+\pagebreak
 \appendix
+\appendixpage
+\addappheadtotoc
 \section {Source Code}
+\subsection{Imports}
 \begin{minted}{python}
 import numpy as np
-
-
+\end{minted}
+\subsection{Runner and Wrapper Code}
+\begin{minted}{python}
 def solver():
     print('this is a solver for Ax=b via Gaussian elimination, providing x, L, and U.\n'
           'It currently only accepts square matrices.\n'
-          'The solver will move the largest value in the first row to the diagonal, solving recursively.\n'
+          'The solver will move the largest value in the first row to the diagonal.\n'
+          'Following that, it will repeat for each remaining row.\n'
           'it holds the permutations in an internal matrix, p.')
     print('please enter rows as numbers separated by commas, no spaces.')
     n_rows = int(input("How many rows?\n"))
@@ -75,32 +357,42 @@ def solver():
     arr_a = np.array(arr_a, dtype=np.double)
     b_string = input('please enter b\n')
     arr_b = b_string.split(',')
-    for e in range(0, len(arr_b)):
-        arr_b[e] = float(arr_b[e])
     while len(arr_b) != n_rows:
         print('invalid b, please try again.')
         b_string = input('please enter b\n')
-        arr_b = int(b_string.split(','))
+        arr_b = b_string.split(',')
+    for e in range(0, len(arr_b)):
+        arr_b[e] = float(arr_b[e])
     arr_b = np.array(arr_b, dtype=np.double)
+    print('Ax=b\n{}x={}\n'.format(arr_a, arr_b))
     for i in range(0, arr_a.shape[0]):
         reorder(arr_a, arr_b, arr_p, i)
     arr_u, arr_c, arr_l = generate_u(arr_a, arr_b, arr_l, n_rows)
-    print('L: {}\nU: {}\nc: {}'.format(arr_l, arr_u, arr_c))
+    print('P:\n{}\n\nL:\n{}\n\nU:\n{}\n\nc:\n{}\n'.format(arr_p,arr_l, arr_u, arr_c))
+    print('Next, we solve Ux=c\nx is the following:')
     arr_x = solve(arr_u, arr_c)
-    print('x = {}'.format(arr_x))
+    for x in arr_x:
+        print(x)
 
 
+if __name__ == '__main__':
+    solver()
+\end{minted}
+\subsection{Reordering Code}
+\label{reorder}
+\begin{minted}{python}
 def reorder(a, b, p, ptr):
     pointer = ptr
     for i in range(ptr, a.shape[0]):
         if a[i][ptr] > a[pointer][ptr]:
             pointer = i
-            # print(i)
     a[[ptr, pointer]] = a[[pointer, ptr]]
     b[[ptr, pointer]] = b[[pointer, ptr]]
     p[[ptr, pointer]] = p[[pointer, ptr]]
-
-
+\end{minted}
+\subsection{LU Decomposer}
+\label{lu}
+\begin{minted}{python}
 def generate_u(arr_a, arr_b, arr_l, n):
     u = np.copy(arr_a)
     c = np.copy(arr_b)
@@ -115,8 +407,10 @@ def generate_u(arr_a, arr_b, arr_l, n):
             else:
                 pass  # avoids division by zero
     return u, c, arr_l
-
-
+\end{minted}
+\subsection{Solver code}
+\label{solver}
+\begin{minted}{python}
 def solve(arr_u, arr_c):
     m = arr_u.shape[0]
     u = arr_u
@@ -135,7 +429,7 @@ def solve(arr_u, arr_c):
                 for i in range(0, ptr):
                     arr_c[i] = arr_c[i] - arr_x[ptr] * u[i][ptr]
             elif arr_c[ptr] != 0:
-                return 'No Solution'
+                return ('No solution',)
             else:
                 return infinite_sols(u, arr_x, arr_c, ptr)
         return arr_x
@@ -157,11 +451,6 @@ def infinite_sols(arr_u, arr_x, arr_c, p):
         arr_x_neg[ptr] = arr_c_neg[ptr] / arr_u[ptr][ptr]
         for i in range(0, ptr):
             arr_c_neg[i] = arr_c_neg[i] - arr_x_neg[ptr] * arr_u[i][ptr]
-    return 'infinitely many solutions', arr_x, arr_x_neg
-
-
-if __name__ == '__main__':
-    solver()
-
+    return 'Infinitely many solutions', arr_x, arr_x_neg
 \end{minted}
 \end{document}

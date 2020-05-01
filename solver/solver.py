@@ -4,7 +4,8 @@ import numpy as np
 def solver():
     print('this is a solver for Ax=b via Gaussian elimination, providing x, L, and U.\n'
           'It currently only accepts square matrices.\n'
-          'The solver will move the largest value in the first row to the diagonal, solving recursively.\n'
+          'The solver will move the largest value in the first row to the diagonal.\n'
+          'Following that, it will repeat for each remaining row.\n'
           'it holds the permutations in an internal matrix, p.')
     print('please enter rows as numbers separated by commas, no spaces.')
     n_rows = int(input("How many rows?\n"))
@@ -24,19 +25,22 @@ def solver():
     arr_a = np.array(arr_a, dtype=np.double)
     b_string = input('please enter b\n')
     arr_b = b_string.split(',')
-    for e in range(0, len(arr_b)):
-        arr_b[e] = float(arr_b[e])
     while len(arr_b) != n_rows:
         print('invalid b, please try again.')
         b_string = input('please enter b\n')
-        arr_b = int(b_string.split(','))
+        arr_b = b_string.split(',')
+    for e in range(0, len(arr_b)):
+        arr_b[e] = float(arr_b[e])
     arr_b = np.array(arr_b, dtype=np.double)
+    print('Ax=b\n{}x={}\n'.format(arr_a, arr_b))
     for i in range(0, arr_a.shape[0]):
         reorder(arr_a, arr_b, arr_p, i)
     arr_u, arr_c, arr_l = generate_u(arr_a, arr_b, arr_l, n_rows)
-    print('L: {}\nU: {}\nc: {}'.format(arr_l, arr_u, arr_c))
+    print('P:\n{}\n\nL:\n{}\n\nU:\n{}\n\nc:\n{}\n'.format(arr_p,arr_l, arr_u, arr_c))
+    print('Next, we solve Ux=c\nx is the following:')
     arr_x = solve(arr_u, arr_c)
-    print('x = {}'.format(arr_x))
+    for x in arr_x:
+        print(x)
 
 
 def reorder(a, b, p, ptr):
@@ -44,7 +48,6 @@ def reorder(a, b, p, ptr):
     for i in range(ptr, a.shape[0]):
         if a[i][ptr] > a[pointer][ptr]:
             pointer = i
-            # print(i)
     a[[ptr, pointer]] = a[[pointer, ptr]]
     b[[ptr, pointer]] = b[[pointer, ptr]]
     p[[ptr, pointer]] = p[[pointer, ptr]]
@@ -84,7 +87,7 @@ def solve(arr_u, arr_c):
                 for i in range(0, ptr):
                     arr_c[i] = arr_c[i] - arr_x[ptr] * u[i][ptr]
             elif arr_c[ptr] != 0:
-                return 'No Solution'
+                return ('No solution',)
             else:
                 return infinite_sols(u, arr_x, arr_c, ptr)
         return arr_x
@@ -106,7 +109,7 @@ def infinite_sols(arr_u, arr_x, arr_c, p):
         arr_x_neg[ptr] = arr_c_neg[ptr] / arr_u[ptr][ptr]
         for i in range(0, ptr):
             arr_c_neg[i] = arr_c_neg[i] - arr_x_neg[ptr] * arr_u[i][ptr]
-    return 'infinitely many solutions', arr_x, arr_x_neg
+    return 'Infinitely many solutions', arr_x, arr_x_neg
 
 
 if __name__ == '__main__':
