@@ -13,11 +13,11 @@ def solver():
     arr_l = np.identity(n_rows)
     arr_a = []
     for i in range(0, n_rows):
-        row = (input('please enter row {} of A\n'.format(i+1)))
+        row = (input(f'please enter row {i+1} of A\n'))
         row = row.split(',')
         while len(row) != n_rows:
             print('invalid input, please re-enter row.')
-            row = (input('please enter row {} of A\n'.format(i + 1)))
+            row = (input(f'please enter row {i+1} of A\n'))
             row = row.split(',')
         for r in range(0, len(row)):
             row[r] = float(row[r])
@@ -32,11 +32,11 @@ def solver():
     for e in range(0, len(arr_b)):
         arr_b[e] = float(arr_b[e])
     arr_b = np.array(arr_b, dtype=np.double)
-    print('Ax=b\n{}x={}\n'.format(arr_a, arr_b))
+    print(f'Ax=b\n{arr_a}x={arr_b}\n')
     for i in range(0, arr_a.shape[0]):
         reorder(arr_a, arr_b, arr_p, i)
     arr_u, arr_c, arr_l = generate_u(arr_a, arr_b, arr_l, n_rows)
-    print('P:\n{}\n\nL:\n{}\n\nU:\n{}\n\nc:\n{}\n'.format(arr_p,arr_l, arr_u, arr_c))
+    print(f'P:\n{arr_p}\n\nL:\n{arr_l}\n\nU:\n{arr_u}\n\nc:\n{arr_c}\n')
     print('Next, we solve Ux=c\nx is the following:')
     arr_x = solve(arr_u, arr_c)
     for x in arr_x:
