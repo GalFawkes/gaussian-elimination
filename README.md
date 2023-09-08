@@ -1,5 +1,5 @@
 # Gaussian Elimination
-Zubair Mukhi, MATH 201 Spring 2020 Final Project
+Thea Mukhi, MATH 201 Spring 2020 Final Project
 
 ## Overview
 This project is a tool written in Python to demonstrate my understanding of Gaussian Elimination and back substitution.
